@@ -15,7 +15,9 @@ class INSTRUCTION(object):
             #  3. inst is exact the binary string of an instruction
             #  4. why we defined mask in isa_encodings.py
             #  5. 4~5 lines are enough to implement this
-            YOUR_CODE_HERE
+            identify_mask = v[1]
+            if identify_mask & inst == identify_mask & k:
+                return k
             # --------------------------------------------------------------
         return ILLEAGAL
     
@@ -30,15 +32,15 @@ class INSTRUCTION(object):
     #  2. Be caerful with the bit operation order
     @staticmethod
     def get_rs1(inst):
-        return YOUR_CODE_HERE
+        return (inst & RS1_MASK) >> RS1_SHIFT
     
     @staticmethod
     def get_rs2(inst):
-        return YOUR_CODE_HERE
+        return (inst & RS2_MASK) >> RS2_SHIFT
     
     @staticmethod
     def get_rd(inst):
-        return YOUR_CODE_HERE
+        return (inst & RD_MASK) >> RD_SHIFT
     # --------------------------------------------------------------
     
     # n_bits is the number of bits of the immediate value
@@ -52,7 +54,7 @@ class INSTRUCTION(object):
             #  1. bit operation is needed
             #  2. (1 << x) -1 will generate a binary string with x 1s
             #  3. 3 lines are enough
-            YOUR_CODE_HERE
+            return (val | (~0 << n_bits))
             # --------------------------------------------------------------
         else:
             return val
@@ -83,10 +85,10 @@ class INSTRUCTION(object):
     #  4. make sure the imm_x are in the correct bit length
     @staticmethod
     def get_imm_b(inst):
-        imm_12 = YOUR_CODE_HERE
-        imm_11 = YOUR_CODE_HERE
-        imm_10_5 = YOUR_CODE_HERE
-        imm_1_4 = YOUR_CODE_HERE
+        imm_12 = (inst >> 31) << 11
+        imm_11 = ((inst >> 7) & 0x1) << 10
+        imm_10_5 = ((inst >> 25) & 0x3f) << 4
+        imm_1_4 = (inst >> 8) & 0xf
         imm = (imm_12 | imm_11 | imm_10_5 | imm_1_4) << 1
         return INSTRUCTION.get_sign_extend(imm, 13)
     # --------------------------------------------------------------

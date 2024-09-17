@@ -13,13 +13,14 @@ class RISCVSIM(object):
     # Only 1 line is needed for each variable
     def __init__(self):
         # progam counter is a register
-        self.pc = YOUR_CODE_HERE
+        self.pc = REG()
         # register files
-        self.rf = YOUR_CODE_HERE
+        self.rf = RF()
         # instruction memory
-        self.imem = YOUR_CODE_HERE
+        # TODO: 确定WORD_SIZE 是否正确
+        self.imem = MEM(IMEM_START, IMEM_SIZE, WORD_SIZE)
         # data memory
-        self.dmem = YOUR_CODE_HERE
+        self.dmem = MEM(DMEM_START, DMEM_SIZE, WORD_SIZE)
     # --------------------------------------------------------------
     
 
@@ -40,7 +41,7 @@ class SIMULATOR(object):
         # Set the program counter
         # Check where is the register binds to
         # Only 1 line is needed
-        YOUR_CODE_HERE
+        SIMULATOR.core.pc.write(entry_point)
         # --------------------------------------------------------------
 
         while True:
@@ -53,7 +54,8 @@ class SIMULATOR(object):
             # update the stats, you used it in Task 2
             # update cycle and instruction count here
             # 2 lines are enough
-            YOUR_CODE_HERE
+            STATS.cycle += 1
+            STATS.icount += 1
             # --------------------------------------------------------------
 
             if not status == EXC_NONE:
@@ -108,7 +110,7 @@ class SIMULATOR(object):
         # Part B
         # Guide:
         #  update the stats, you used it in Task 2
-        YOUR_CODE_HERE
+        STATS.inst_alu += 1
         # --------------------------------------------------------------
 
 
@@ -121,17 +123,17 @@ class SIMULATOR(object):
         #   check rv32i.py
 
         # get register index
-        rs1 = YOUR_CODE_HERE
-        rs2 = YOUR_CODE_HERE
-        rd = YOUR_CODE_HERE
+        rs1 = INSTRUCTION.get_rs1(inst)
+        rs2 = INSTRUCTION.get_rs2(inst)
+        rd = INSTRUCTION.get_rd(inst)
 
         # get register values
-        rs1_val = YOUR_CODE_HERE
-        rs2_val = YOUR_CODE_HERE
+        rs1_val = SIMULATOR.core.rf.read(rs1)
+        rs2_val = SIMULATOR.core.rf.read(rs2)
 
         # get immediate values
-        imm_i = YOUR_CODE_HERE
-        imm_u = YOUR_CODE_HERE
+        imm_i = INSTRUCTION.get_imm_i(inst)
+        imm_u = INSTRUCTION.get_imm_u(inst)
         # --------------------------------------------------------------
             
         # decide the operand 1
@@ -168,31 +170,31 @@ class SIMULATOR(object):
         #   3. each case can be done in 1~2 lines
         out = None
         if isa_info[IN_OP] == ALU_ADD:
-            YOUR_CODE_HERE
+            out = (op_1 + op_2) & 0xffffffff
         elif isa_info[IN_OP] == ALU_SUB:
-            YOUR_CODE_HERE
+            out = op_1 - op_2
         elif isa_info[IN_OP] == ALU_MUL:
             out = (op_1 * op_2) & 0xffffffff
         elif isa_info[IN_OP] == ALU_MULHU:
             out = ((WORD(op_1) * WORD(op_2)) >> 32) & 0xffffffff
         elif isa_info[IN_OP] == ALU_AND:
-            YOUR_CODE_HERE
+            out = op_1 & op_2
         elif isa_info[IN_OP] == ALU_OR:
-            YOUR_CODE_HERE
+            out = op_1 | op_2
         elif isa_info[IN_OP] == ALU_XOR:
-            YOUR_CODE_HERE
+            out = op_1 ^ op_2
         elif isa_info[IN_OP] == ALU_SLT:
             # set less than (signed)
-            YOUR_CODE_HERE
+            out = 1 if op_2 < op_2 else 0
         elif isa_info[IN_OP] == ALU_SLTU:
             # set less than (unsigned)
-            YOUR_CODE_HERE
+            out = 1 if op_2 < op_2 else 0
         elif isa_info[IN_OP] == ALU_SLL:
-            YOUR_CODE_HERE
+            out = op_1 << op_2
         elif isa_info[IN_OP] == ALU_SRA:
-            YOUR_CODE_HERE
+            out = op_1 >> op_2
         elif isa_info[IN_OP] == ALU_SRL:
-            YOUR_CODE_HERE
+            out = op_1 >> op_2
         else:
             out = WORD(0)
         # --------------------------------------------------------------
@@ -205,7 +207,8 @@ class SIMULATOR(object):
         # Guide:
         #   set the pc to the next instruction
         #   2 lines are enough
-        YOUR_CODE_HERE
+        SIMULATOR.core.pc.write(pc + 4)
+
         # --------------------------------------------------------------
 
 
@@ -216,7 +219,7 @@ class SIMULATOR(object):
         # Guide:
         #   Commit results
         #   1 line is enough
-        YOUR_CODE_HERE
+        SIMULATOR.core.rf.write(rd, out)
         # --------------------------------------------------------------
         return EXC_NONE
 
@@ -229,7 +232,7 @@ class SIMULATOR(object):
         # Part B
         # Guide:
         #  update the stats, you used it in Task 2
-        YOUR_CODE_HERE
+        STATS.inst_mem += 1
         # --------------------------------------------------------------
 
 
@@ -240,22 +243,22 @@ class SIMULATOR(object):
         # Guide:
         #  1. prepare the operands
         #  2. notice that imm will be treated as signed
-        rs1 = YOUR_CODE_HERE
-        rs1_val = YOUR_CODE_HERE
-        # LOAD 
+        rs1 = INSTRUCTION.get_rs1(inst)
+        rs1_val = SIMULATOR.core.rf.read(rs1)
+        # LOAD
         if isa_info[IN_OP] == MEM_LD:
 
             # lw rd, rs1, imm
-            rd = YOUR_CODE_HERE
-            imm_i = YOUR_CODE_HERE
-            addr = YOUR_CODE_HERE
+            rd = INSTRUCTION.get_rd(inst)
+            imm_i = INSTRUCTION.get_imm_i(inst)
+            addr = rs1_val + imm_i
             # read from memory
-            data, status = YOUR_CODE_HERE
+            data, status = SIMULATOR.core.dmem.access(True, addr, 0, M_XRD)
 
 
             if status:
                 # write to destination
-                YOUR_CODE_HERE
+                SIMULATOR.core.rf.write(rd, data)
             else:
                 print("Exception at 0x%08x: " % pc, end="")
                 print(EXC_MSG[EXC_DMEM_ERROR])
@@ -263,12 +266,12 @@ class SIMULATOR(object):
         else: # STORE
             
             # sw rs1, rs2, imm
-            rs2 = YOUR_CODE_HERE
-            rs2_val = YOUR_CODE_HERE
-            imm_s  = YOUR_CODE_HERE
-            addr = YOUR_CODE_HERE
+            rs2 = INSTRUCTION.get_rs2(inst)
+            rs2_val = SIMULATOR.core.rf.read(rs2)
+            imm_s = INSTRUCTION.get_imm_s(inst)
+            addr = rs1_val + imm_s
             # write to memory
-            data, status = YOUR_CODE_HERE
+            data, status = SIMULATOR.core.dmem.access(True, addr, rs2_val, M_XWR)
             
             # Exception: data memory error
             if not status:
@@ -285,7 +288,7 @@ class SIMULATOR(object):
         # Guide:
         #  set the pc to the next instruction
         #  2 lines are enough
-        YOUR_CODE_HERE
+        SIMULATOR.core.pc.write(pc + 4)
         # --------------------------------------------------------------
 
 
@@ -303,7 +306,8 @@ class SIMULATOR(object):
         # Guide:
         #   set the pc
         #   2 lines are enough
-        YOUR_CODE_HERE
+        STATS.inst_ctrl += 1
+        SIMULATOR.core.pc.write(pc + 4)
         # --------------------------------------------------------------
 
 
@@ -322,18 +326,18 @@ class SIMULATOR(object):
         # Guide:
         #  prepare the operands
         #  check rv32i.py
-        rs1 = YOUR_CODE_HERE
-        rs2 = YOUR_CODE_HERE
+        rs1 = INSTRUCTION.get_rs1(inst)
+        rs2 = INSTRUCTION.get_rs2(inst)
 
         # used by jal and jalr to store the return address
-        rd = YOUR_CODE_HERE
+        rd = INSTRUCTION.get_rd(inst)
 
-        rs1_val = YOUR_CODE_HERE
-        rs2_val = YOUR_CODE_HERE
+        rs1_val = SIMULATOR.core.rf.read(rs1)
+        rs2_val = SIMULATOR.core.rf.read(rs2)
 
-        imm_i = YOUR_CODE_HERE
-        imm_j = YOUR_CODE_HERE
-        imm_b = YOUR_CODE_HERE
+        imm_i = INSTRUCTION.get_imm_i(inst)
+        imm_j = INSTRUCTION.get_imm_j(inst)
+        imm_b = INSTRUCTION.get_imm_b(inst)
         # --------------------------------------------------------------
 
 
@@ -352,37 +356,43 @@ class SIMULATOR(object):
         #   decide the next pc in each case
         pc_next = None
         if opcode == JAL:
-            YOUR_CODE_HERE
+            pc_next = pc + imm_j
         elif opcode == BEQ:
-            YOUR_CODE_HERE
+            if rs1_val == rs2_val:
+                pc_next = pc + imm_b
         elif opcode == BNE:
-            YOUR_CODE_HERE
+            if rs1_val != rs2_val:
+                pc_next = pc + imm_b
         elif opcode == BLT:
             # signed
-            YOUR_CODE_HERE
+            if rs1_val < rs2_val:
+                pc_next = pc + imm_b
         elif opcode == BGE:
             # signed
-            YOUR_CODE_HERE
+            if rs1_val >= rs2_val:
+                pc_next = pc + imm_b
         elif opcode == BLTU: 
             # unsigned
-            YOUR_CODE_HERE
+            if rs1_val < rs2_val:
+                pc_next = pc + imm_b
         elif opcode == BGEU: 
             # unsigned
-            YOUR_CODE_HERE
+            if rs1_val >= rs2_val:
+                pc_next = pc + imm_b
         elif opcode == JALR:
-            YOUR_CODE_HERE
+            pc_next = rs1_val + imm_i
         else:
             pc_next = pc_prepare
 
         if opcode == JAL or opcode == JALR:
             # a register is changed
             # 1 line is enough
-            YOUR_CODE_HERE
+            SIMULATOR.core.rf.write(rd, pc_prepare)
         # --------------------------------------------------------------
 
         # pc_next is has been decided
         # Update PC
-        SIMULATOR.core.pc.write(pc_next)
+        SIMULATOR.core.pc.write(pc_next if (pc_next is not None) else pc + 4)
         return EXC_NONE
     
     @staticmethod
@@ -393,8 +403,8 @@ class SIMULATOR(object):
         # Guide:
         #  1. get the pc
         #  2. access the instruction memory, valid is True
-        pc = YOUR_CODE_HERE
-        inst, status = YOUR_CODE_HERE
+        pc = SIMULATOR.core.pc.read()
+        inst, status = SIMULATOR.core.imem.access(True, pc, 0, M_XRD)
         # --------------------------------------------------------------
 
         # Exception: instruction memory error
@@ -412,13 +422,13 @@ class SIMULATOR(object):
         #  1. get the opcode
         #  2. get the isa info though the opcode
         #  3. we defined all isa info in isa_encodings.py
-        opcode = YOUR_CODE_HERE
+        opcode = INSTRUCTION.get_opcode(inst)
 
         # Exception: illegal instruction
         if opcode == ILLEAGAL:
             return EXC_ILLEGAL_INST,None
         
-        isa_info = YOUR_CODE_HERE
+        isa_info = rv32i_t[opcode]
         return opcode,isa_info
         # ------------------------------------------------------------
 
@@ -434,7 +444,15 @@ class SIMULATOR(object):
         #  3. each function unit will return a status and EX will also return it
         #  4. check the definitions.py [Which function unit to use]
         #  5. 6 lines are enough
-        YOUR_CODE_HERE
+        call_func = isa_info[IN_CLASS]
+        if call_func == CL_ALU:
+            return SIMULATOR.alu_fn(pc, inst, opcode, isa_info)
+        elif call_func == CL_MEM:
+            return SIMULATOR.mem_fn(pc, inst, opcode, isa_info)
+        elif call_func == CL_CTRL:
+            return SIMULATOR.ctrl_fn(pc, inst, opcode, isa_info)
+        else:
+            return EXC_ILLEGAL_INST
         # --------------------------------------------------------------
 
 

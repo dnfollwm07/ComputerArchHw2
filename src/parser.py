@@ -82,7 +82,7 @@ class PROGRAM(object):
                 # store the instruction and data contents by word size
                 for i in range(0, memsz, WORD_SIZE):
                     val = int.from_bytes(seg.data()[i:i+WORD_SIZE],byteorder='little')
-                    #print('0x%08x' % val)
+                    # print('0x%08x' % val)
                     # init a memory write
                     mem.access(True, addr, val, M_XWR)
                     addr += WORD_SIZE

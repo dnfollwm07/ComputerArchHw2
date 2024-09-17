@@ -20,11 +20,11 @@ YOUR_CODE_HERE      = None
 #   See how ILLEAGAL is defined (these values are uint32)
 #   Used in riscvsim.py to initialize the memory layout
 #   All these numbers are unsigned (use WORD to warp them)
-IMEM_START          = YOUR_CODE_HERE
-IMEM_SIZE           = YOUR_CODE_HERE 
-DMEM_START          = YOUR_CODE_HERE
+IMEM_START          = 0x80000000
+IMEM_SIZE           = 64 * 1024
+DMEM_START          = 0x80010000
 # Set this size to 15MB
-DMEM_SIZE           = YOUR_CODE_HERE
+DMEM_SIZE           = 15 * 1024 * 1024
 # --------------------------------------------------------------
 
 
@@ -48,7 +48,7 @@ ILLEAGAL            = WORD(0xffffffff)
 # So the dumped instructions of this simulator may not match with the objdump
 # You can check whether the mismatch instructions are  pseudo-instructions or not
 BUBBLE              = WORD(0x00004033)
-NOP                 = YOUR_CODE_HERE
+NOP                 = WORD(0x00000013)
 # --------------------------------------------------------------
 
 
@@ -63,11 +63,11 @@ NOP                 = YOUR_CODE_HERE
 RD_MASK             = WORD(0x00000f80)
 RD_SHIFT            = 7
 
-RS1_MASK            = YOUR_CODE_HERE
-RS1_SHIFT           = YOUR_CODE_HERE
+RS1_MASK            = WORD(0xf8000)
+RS1_SHIFT           = 15
 
-RS2_MASK            = YOUR_CODE_HERE
-RS2_SHIFT           = YOUR_CODE_HERE
+RS2_MASK            = WORD(0x1f00000)
+RS2_SHIFT           = 20
 # --------------------------------------------------------------
 
 

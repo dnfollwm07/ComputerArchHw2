@@ -69,10 +69,11 @@ class REG(object):
         self.reg = WORD(val)
 
     def read(self):
-        YOUR_CODE_HERE
+        return self.reg
     
     def write(self, content):
-        YOUR_CODE_HERE
+        # TODO: 确认是否正确
+        self.reg = WORD(content)
 # --------------------------------------------------------------
 
 
@@ -91,11 +92,14 @@ class RF(object):
         pass
 
     def read(self, reg_idx):
-        YOUR_CODE_HERE
+        if reg_idx == 0:
+            return 0
+        return self.rf[reg_idx]
 
     def write(self, reg_idx, content):
-        YOUR_CODE_HERE
-    
+        if reg_idx > 0:
+            self.rf[reg_idx] = WORD(content)
+
 
     # !!!DO NOT MODIFY!!!
     # for debug, print all registers in format
@@ -149,10 +153,10 @@ class MEM(object):
             res = (WORD(0), False)
         # get the offset relative to the start
         elif ctrl == M_XRD:
-            val = YOUR_CODE_HERE
+            val = self.memory[(addr - self.start)//self.word_sz]
             res = (val, True)
         elif ctrl == M_XWR:
-            YOUR_CODE_HERE
+            self.memory[(addr - self.start)//self.word_sz] = WORD(data)
             # just to keep the return format consistent
             res = (WORD(0), True)
         else:
@@ -181,10 +185,10 @@ class STATS(object):
 
     @staticmethod
     def print_stats():
-        cpi = YOUR_CODE_HERE
-        alu_ratio =  YOUR_CODE_HERE
-        data_ratio = YOUR_CODE_HERE
-        ctrl_ratio = YOUR_CODE_HERE
+        cpi = STATS.icount / STATS.cycle
+        alu_ratio =  STATS.inst_alu / STATS.cycle * 100
+        data_ratio = STATS.inst_mem / STATS.cycle * 100
+        ctrl_ratio = STATS.inst_ctrl / STATS.cycle * 100
 
         # !!!DO NOT MODIFY!!!
         print("%d instructions executed in %d cycles. CPI = %.3f" % (STATS.icount, STATS.cycle, cpi))
